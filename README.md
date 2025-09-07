@@ -1,6 +1,6 @@
 # KeepingTab Sync Service
 
-A Go-based background service that handles cross-device synchronization of priority tabs for the KeepingTab Chrome extension. This service acts as the backbone for syncing tab collections and sessions between multiple devices linked to a single user account.
+A lightweight Go-based background service that handles cross-device synchronization of priority tabs for the KeepingTab Chrome extension. In the MVP architecture, this service works alongside the Node.js API using a shared SQLite database for simple, cost-effective synchronization.
 
 ## 🎯 Purpose
 
@@ -8,13 +8,13 @@ The KeepingTab Sync Service is designed to:
 
 - **Synchronize priority tabs** across multiple devices and browser instances
 - **Merge tab collections** intelligently when conflicts arise
-- **Maintain session state** for seamless cross-device experiences  
-- **Handle real-time updates** via Redis queue processing
-- **Persist tab data** in PostgreSQL for reliability and recovery
+- **Maintain session state** for seamless cross-device experiences
+- **Process sync operations** via shared SQLite database
+- **Provide lightweight background processing** with minimal resource usage
 
 ## 🏗️ Architecture Overview
 
-### System Components
+### MVP System Components (Lean Architecture)
 
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
@@ -22,20 +22,26 @@ The KeepingTab Sync Service is designed to:
 │  (Frontend)     │◄──►│  (Node.js API)  │◄──►│  (Go Service)   │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
                                 │                       │
-                                ▼                       ▼
-                       ┌─────────────────┐    ┌─────────────────┐
-                       │   PostgreSQL    │    │     Redis       │
-                       │   (Database)    │    │    (Queue)      │
-                       └─────────────────┘    └─────────────────┘
+                                ▼                       │
+                       ┌─────────────────┐              │
+                       │     SQLite      │◄─────────────┘
+                       │ (Fly.io Volume) │
+                       └─────────────────┘
+                                │
+                                ▼
+                       ┌─────────────────┐
+                       │  In-Memory      │
+                       │  Cache (API)    │
+                       └─────────────────┘
 ```
 
-### Data Flow
+### MVP Data Flow
 
 1. **Chrome Extension** → Manages local priority tabs (max 3 tabs)
-2. **keepingtab-api** → REST API for authentication, payments, and sync endpoints
-3. **keepingtab-sync** → Background service processing sync operations
-4. **Redis** → Message queue for real-time sync events
-5. **PostgreSQL** → Persistent storage for user accounts and tab collections
+2. **keepingtab-api** → REST API with SQLite persistence and in-memory cache
+3. **keepingtab-sync** → Background service reading from shared SQLite
+4. **SQLite** → Single source of truth on Fly.io volume
+5. **In-Memory Cache** → Hot data cache in Node.js API process
 
 ## 🔧 Technical Stack
 
