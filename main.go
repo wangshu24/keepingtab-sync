@@ -1,18 +1,28 @@
 package main
 
 import (
+    "database/sql"
     "fmt"
     "log"
-    "os"
+
+    _ "github.com/mattn/go-sqlite3"
 )
 
 func main() {
-    fmt.Println("Starting Go Sync Service...")
-    redisURL := os.Getenv("REDIS_URL")
-    dbURL := os.Getenv("DATABASE_URL")
-    log.Println("Redis URL:", redisURL)
-    log.Println("Postgres URL:", dbURL)
+    fmt.Println("Starting Go Sync Service with SQLite...")
+    db, err := sql.Open("sqlite3", "./data/keepingtab.db")
+    if err != nil {
+        log.Fatal(err)
+    }
+    defer db.Close()
 
-    // TODO: implement Redis queue consumer and tab merge logic
-    select {} // keep running
+    // Example: read tab count
+    row := db.QueryRow("SELECT COUNT(*) FROM tabs")
+    var count int
+    if err := row.Scan(&count); err == nil {
+        log.Println("Tabs in DB:", count)
+    }
+
+    // TODO: implement sync logic
+    select {} // block forever
 }

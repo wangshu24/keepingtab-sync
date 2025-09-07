@@ -1,5 +1,9 @@
-app = "keepingtab-sync"
+app = "keepingtab-sync-sqlite"
 primary_region = "iad"
+
+[mounts]
+  source = "keepingtab_data"
+  destination = "/app/data"
 
 [processes]
   sync = "main"
